@@ -17,9 +17,9 @@ namespace VMBoxSnapshot
     public delegate void CommandVMs(string data); 
     public partial class App : Form
     {
-        public event CommandVMs proc;
+        public event CommandVMs Proc;
 
-        int timerInterval = 10000;
+        public int TimerInterval => tm.Interval;
         Tmr tm = new Tmr();
 
         #region Date and Time proportis
@@ -34,15 +34,8 @@ namespace VMBoxSnapshot
             get => timeInDay.ToShortTimeString();
             set
             {
-                DateTime _tm;
-                try
-                {
-                    _tm = DateTime.Parse(value);
-                }
-                catch 
-                {
-                    _tm = DateTime.Now;
-                }
+                DateTime _tm = (DateTime.TryParse(value, out _tm)) ? _tm : DateTime.Now;
+
                 timeInDay = new DateTime(year: DateTime.Now.Year,
                                          month: DateTime.Now.Month,
                                          day: DateTime.Now.Day,
@@ -53,7 +46,7 @@ namespace VMBoxSnapshot
         }
 
         DateTime TimeLastUpdate => DateTime.Parse(LastUpdate);
-        TimeSpan OverTheLastUpdate => (DateTime.Now - TimeLastUpdate);
+        TimeSpan OverTheLastUpdate => (DateTime.Now -  new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, TimeLastUpdate.Hour, TimeLastUpdate.Minute,0));
         TimeSpan ElapsedTIme => (DateTime.Now - timeInDay);
 
         string lastUpdate;
@@ -62,15 +55,11 @@ namespace VMBoxSnapshot
             get => lastUpdate ?? DateTime.Now.ToString();
             set
             {
-                try
-                {
-                    var _dt = DateTime.Parse(value);
-                    lastUpdate = _dt.ToString();
-                }
-                catch
-                {
+                DateTime _dt;
 
-                }
+                if (DateTime.TryParse(value, out _dt))
+                    lastUpdate = _dt.ToString();
+                else lastUpdate = DateTime.Now.ToString();
             }
         }
 
@@ -191,8 +180,8 @@ namespace VMBoxSnapshot
         void TimeOutUpdater()
         {
             //LastUpdate = "18. 2. 2023 09:53:43";
-
-            var _df = ElapsedTIme - OverTheLastUpdate;
+            //TimeSpan _cn = 
+            var _df = (new TimeSpan(hours: timeInDay.Hour, minutes: timeInDay.Minute, 0) - OverTheLastUpdate);
 
             /*Elapsed time message*/
             string _elMessage = $"Time elapsed before \"{ElapsedTIme.Hours} hours :" +
@@ -200,7 +189,7 @@ namespace VMBoxSnapshot
                                                      $" {ElapsedTIme.Seconds} sec\"";
             /*Time count down message*/
             string _cdMessage = string.Format("{0}: {1} hour {2} min {3} sec",(_df.Ticks < 0)?
-                "Time expires in" : "Time passed before", _df.Hours * -1,_df.Minutes *-1,_df.Seconds*-1);
+                "Time expires in" : "Time passed before", _df.Hours,_df.Minutes,_df.Seconds);
 
             switch (mode)
             {
@@ -371,7 +360,7 @@ namespace VMBoxSnapshot
         void OkIsAll()
         {
             tm.Tick += TimerUpdate;
-            tm.Interval = timerInterval;
+            tm.Interval = 10000;
             tm.Start();
 
             readyToAutoSnapShot = true;
