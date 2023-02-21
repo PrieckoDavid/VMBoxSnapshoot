@@ -176,7 +176,6 @@
             // OnItervalRb
             // 
             this.OnItervalRb.AutoSize = true;
-            this.OnItervalRb.Enabled = false;
             this.OnItervalRb.Location = new System.Drawing.Point(212, 45);
             this.OnItervalRb.Name = "OnItervalRb";
             this.OnItervalRb.Size = new System.Drawing.Size(89, 17);
