@@ -37,7 +37,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.notIco = new System.Windows.Forms.NotifyIcon(this.components);
             this.ContMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.showCMB = new System.Windows.Forms.ToolStripMenuItem();
+            this.showHideCMB = new System.Windows.Forms.ToolStripMenuItem();
             this.createCMB = new System.Windows.Forms.ToolStripMenuItem();
             this.exitSMB = new System.Windows.Forms.ToolStripMenuItem();
             this.CreateBtn = new System.Windows.Forms.Button();
@@ -114,29 +114,29 @@
             // 
             this.ContMenu.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.ContMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.showCMB,
+            this.showHideCMB,
             this.createCMB,
             this.exitSMB});
             this.ContMenu.Name = "ContMenu";
             this.ContMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
             this.ContMenu.ShowImageMargin = false;
             this.ContMenu.ShowItemToolTips = false;
-            this.ContMenu.Size = new System.Drawing.Size(135, 82);
+            this.ContMenu.Size = new System.Drawing.Size(156, 104);
             // 
-            // showCMB
+            // showHideCMB
             // 
-            this.showCMB.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.showCMB.ForeColor = System.Drawing.Color.White;
-            this.showCMB.Name = "showCMB";
-            this.showCMB.Size = new System.Drawing.Size(134, 26);
-            this.showCMB.Text = "Hide/Show";
+            this.showHideCMB.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.showHideCMB.ForeColor = System.Drawing.Color.White;
+            this.showHideCMB.Name = "showHideCMB";
+            this.showHideCMB.Size = new System.Drawing.Size(155, 26);
+            this.showHideCMB.Text = "Hide/Show";
             // 
             // createCMB
             // 
             this.createCMB.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.createCMB.ForeColor = System.Drawing.Color.White;
             this.createCMB.Name = "createCMB";
-            this.createCMB.Size = new System.Drawing.Size(134, 26);
+            this.createCMB.Size = new System.Drawing.Size(155, 26);
             this.createCMB.Text = "Create Now";
             // 
             // exitSMB
@@ -144,7 +144,7 @@
             this.exitSMB.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.exitSMB.ForeColor = System.Drawing.Color.White;
             this.exitSMB.Name = "exitSMB";
-            this.exitSMB.Size = new System.Drawing.Size(134, 26);
+            this.exitSMB.Size = new System.Drawing.Size(155, 26);
             this.exitSMB.Text = "Exit";
             // 
             // CreateBtn
@@ -264,6 +264,7 @@
             this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.pictureBox3);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "App";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -285,7 +286,7 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.NotifyIcon notIco;
         private System.Windows.Forms.ContextMenuStrip ContMenu;
-        private System.Windows.Forms.ToolStripMenuItem showCMB;
+        private System.Windows.Forms.ToolStripMenuItem showHideCMB;
         private System.Windows.Forms.ToolStripMenuItem exitSMB;
         private System.Windows.Forms.Button CreateBtn;
         private System.Windows.Forms.ListBox ListVM;
