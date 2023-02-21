@@ -194,9 +194,10 @@ namespace VMBoxSnapshot
                     break;
                 /*Interval update*/
                 case 2:
-                    if (TimeLastUpdate.Day != DateTime.Now.Day || TimeLastUpdate.Month != DateTime.Now.Month || TimeLastUpdate.Year != DateTime.Now.Year) { SaveConfig(confPath); }
-                    if (_df.Ticks < 0 && !CreatedTodayCh.Checked)
-                        if (DialogCreateSnapShoot()) CreatedTodayCh.Checked = false;
+                    if (TimeLastUpdate.Day != DateTime.Now.Day || TimeLastUpdate.Month != DateTime.Now.Month || TimeLastUpdate.Year != DateTime.Now.Year) 
+                        SaveConfig(confPath); 
+                    else if (_df.Ticks < 0 && !CreatedTodayCh.Checked)
+                             if (DialogCreateSnapShoot()) CreatedTodayCh.Checked = false;
                     break;
             }
         }
