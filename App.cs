@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Tmr = System.Windows.Forms.Timer;
 
@@ -108,6 +105,9 @@ namespace VMBoxSnapshot
             /*Load all events*/
             LoadNoNameEvents();
         }
+
+        #region Events
+
         /// <summary>
         /// Loading all events
         /// </summary>
@@ -132,6 +132,19 @@ namespace VMBoxSnapshot
             //proc += (data) => ThreadDone(data);
 
         }
+        void ShowHide(object o, EventArgs e)
+        {
+            if (this.Visible) foreach (Form item in Application.OpenForms) item.Hide();
+            else
+            {
+                foreach (Form item in Application.OpenForms) item.Show();
+                WindowState = FormWindowState.Normal;
+            }
+
+        }
+
+        #endregion Events
+        #region Override 
 
         /// <summary>
         /// Hide Close button
@@ -156,20 +169,9 @@ namespace VMBoxSnapshot
             if (WindowState == FormWindowState.Minimized) foreach (Form item in Application.OpenForms) item.Hide();
             else foreach (Form item in Application.OpenForms) item.Show();
         }
-        void ShowHide(object o, EventArgs e)
-        {
-            if (this.Visible) foreach (Form item in Application.OpenForms) item.Hide();
-            else
-            {
-                foreach (Form item in Application.OpenForms) item.Show();
-                WindowState = FormWindowState.Normal;
-            }
-                
-        }
-        void TimerUpdate(object o,EventArgs e)
-        {
-            TimeOutUpdater();
-        }
+
+        #endregion Override
+
         void TimeOutUpdater()
         {
             var _df = (new TimeSpan(hours: timeInDay.Hour, minutes: timeInDay.Minute, 0) - OverTheLastUpdate);
@@ -179,29 +181,22 @@ namespace VMBoxSnapshot
             //                                         $" {ElapsedTIme.Minutes} min :" +
             //                                         $" {ElapsedTIme.Seconds} sec\"";
             /*Time count down message*/
-            string _cdMessage = string.Format("{0}: {1} hour {2} min {3} sec",(_df.Ticks < 0)?
-                "Time expires in" : "Time passed before", _df.Hours,_df.Minutes,_df.Seconds);
+            //string _cdMessage = string.Format("{0}: {1} hour {2} min {3} sec",(_df.Ticks < 0)?
+            //    "Time passed before" : "Time expires in", _df.Hours,_df.Minutes,_df.Seconds);
 
             switch (mode)
             {
                 /*Daily update */
                 case 1:
                     if (!CreatedTodayCh.Checked)
-                        if ((DateTime.Compare(DateTime.Now, TimePick.Value) >= 0)) 
-                        {
-                            CreatedTodayCh.Checked = true;
-                            var _res = (MessageBox.Show("Time to make SnapShot! Do you want to make Snapshot?", "Alarm", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning) ) ;
-                            if (_res == DialogResult.Yes)
-                            {
-                                CreateSnapShot();
-                                SaveConfig(confPath);
-                            }
-                            else if (_res == DialogResult.Cancel) CreatedTodayCh.Checked = false;
-                        }
+                        if ((DateTime.Compare(DateTime.Now, TimePick.Value) >= 0))
+                            DialogCreateSnapShoot();
                     break;
                 /*Interval update*/
                 case 2:
-                    notIco.ShowBalloonTip(100, "Time update", _cdMessage, ToolTipIcon.Info);
+                    if (TimeLastUpdate.Day != DateTime.Now.Day || TimeLastUpdate.Month != DateTime.Now.Month || TimeLastUpdate.Year != DateTime.Now.Year) { SaveConfig(confPath); }
+                    if (_df.Ticks < 0 && !CreatedTodayCh.Checked)
+                        if (DialogCreateSnapShoot()) CreatedTodayCh.Checked = false;
                     break;
             }
         }
@@ -220,7 +215,7 @@ namespace VMBoxSnapshot
             if (_bl) existed((string.Format(@"{0}\{1}", folderPath, file)));
             return _bl;
         }
-        public string FolderPathBrowse(string defaultPath = @"C:\")
+        string FolderPathBrowse(string defaultPath = @"C:\")
         {
             var _path = defaultPath;
             using(var fbd = new FolderBrowserDialog())
@@ -242,7 +237,7 @@ namespace VMBoxSnapshot
             foreach (var item in _t)
                 ListVM.Items.Add(item);
         }
-        public void ReadProcess(string path,string args,uint id = 0)
+        void ReadProcess(string path,string args,uint id = 0)
         {
             string _list = null;
 
@@ -335,6 +330,23 @@ namespace VMBoxSnapshot
         }
 
         #endregion Config file
+
+        bool DialogCreateSnapShoot()
+        {
+
+            CreatedTodayCh.Checked = true;
+
+            var _res = (MessageBox.Show("Time to make SnapShot! Do you want to make Snapshot?", "Alarm", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning));
+            if (_res == DialogResult.Yes)
+            {
+                CreateSnapShot();
+                SaveConfig(confPath);
+                return true;
+            }
+            else if (_res == DialogResult.Cancel) CreatedTodayCh.Checked = false;
+
+            return false;
+        }
         /// <summary>
         /// Function create snapshot
         /// </summary>
@@ -353,7 +365,8 @@ namespace VMBoxSnapshot
         }
         void OkIsAll()
         {
-            tm.Tick += TimerUpdate;
+            tm.Tick += (o,e) => TimeOutUpdater();
+
             tm.Interval = 10000;
             tm.Start();
 
