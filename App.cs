@@ -1,15 +1,13 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
-using VMBoxSnapshoot;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 using Tmr = System.Windows.Forms.Timer;
 
 namespace VMBoxSnapshot
@@ -56,10 +54,7 @@ namespace VMBoxSnapshot
             set
             {
                 DateTime _dt;
-
-                if (DateTime.TryParse(value, out _dt))
-                    lastUpdate = _dt.ToString();
-                else lastUpdate = DateTime.Now.ToString();
+                lastUpdate = (DateTime.TryParse(value, out _dt)) ? _dt.ToString() : DateTime.Now.ToString();
             }
         }
 
@@ -107,7 +102,6 @@ namespace VMBoxSnapshot
             }
         }
         readonly string confPath = @".\config.ini";
-        bool Configurated { get => File.Exists(confPath); }
         bool readyToAutoSnapShot = false;
         public App()
         {
@@ -127,10 +121,11 @@ namespace VMBoxSnapshot
             /*Context menu exit click event*/
             exitSMB.Click += (o, e) => this.Close();
             /*Context menu Hide/Show click event*/
-            showCMB.Click += ShowHide;
+            showHideCMB.Click += ShowHide;
+            notIco.DoubleClick += ShowHide;
             /*Save button click event*/
             SaveBtn.Click += (o, e) => SaveConfig(confPath);
-            
+            /*Create Snapshoot buttons*/
             CreateBtn.Click += (o,e) => CreateSnapShot();
             createCMB.Click += (o,e) => CreateSnapShot();
             /*List VM selected event change used VM*/
@@ -164,8 +159,7 @@ namespace VMBoxSnapshot
         }
         void ShowHide(object o, EventArgs e)
         {
-            if (this.Visible)
-                foreach (Form item in Application.OpenForms) item.Hide();
+            if (this.Visible) foreach (Form item in Application.OpenForms) item.Hide();
             else
             {
                 foreach (Form item in Application.OpenForms) item.Show();
@@ -179,23 +173,22 @@ namespace VMBoxSnapshot
         }
         void TimeOutUpdater()
         {
-            //LastUpdate = "18. 2. 2023 09:53:43";
-            //TimeSpan _cn = 
             var _df = (new TimeSpan(hours: timeInDay.Hour, minutes: timeInDay.Minute, 0) - OverTheLastUpdate);
 
             /*Elapsed time message*/
-            string _elMessage = $"Time elapsed before \"{ElapsedTIme.Hours} hours :" +
-                                                     $" {ElapsedTIme.Minutes} min :" +
-                                                     $" {ElapsedTIme.Seconds} sec\"";
+            //string _elMessage = $"Time elapsed before \"{ElapsedTIme.Hours} hours :" +
+            //                                         $" {ElapsedTIme.Minutes} min :" +
+            //                                         $" {ElapsedTIme.Seconds} sec\"";
             /*Time count down message*/
             string _cdMessage = string.Format("{0}: {1} hour {2} min {3} sec",(_df.Ticks < 0)?
                 "Time expires in" : "Time passed before", _df.Hours,_df.Minutes,_df.Seconds);
 
             switch (mode)
             {
-                case 1://Daily update 
+                /*Daily update */
+                case 1:
                     if (!CreatedTodayCh.Checked)
-                        if (CountDown()) 
+                        if ((DateTime.Compare(DateTime.Now, TimePick.Value) >= 0)) 
                         {
                             CreatedTodayCh.Checked = true;
                             var _res = (MessageBox.Show("Time to make SnapShot! Do you want to make Snapshot?", "Alarm", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning) ) ;
@@ -207,18 +200,11 @@ namespace VMBoxSnapshot
                             else if (_res == DialogResult.Cancel) CreatedTodayCh.Checked = false;
                         }
                     break;
-                case 2: //Interval update
-                    ShowMessage("Time update", _cdMessage, ToolTipIcon.Info);
+                /*Interval update*/
+                case 2:
+                    notIco.ShowBalloonTip(100, "Time update", _cdMessage, ToolTipIcon.Info);
                     break;
             }
-        }
-        bool CountDown(DateTime dt1,DateTime dt2)
-        {
-            return (DateTime.Compare(dt1,dt2) >= 0)? true : false; 
-        }
-        bool CountDown()
-        {
-            return CountDown(DateTime.Now, TimePick.Value);
         }
 
         bool VMBoxFolderExisted(string folderPath, string file)
@@ -235,10 +221,6 @@ namespace VMBoxSnapshot
             if (_bl) existed((string.Format(@"{0}\{1}", folderPath, file)));
             return _bl;
         }
-        void ShowMessage(string title,string body,ToolTipIcon flag)
-        {
-            notIco.ShowBalloonTip(100, title, body, flag);
-        }
         public string FolderPathBrowse(string defaultPath = @"C:\")
         {
             var _path = defaultPath;
@@ -251,7 +233,7 @@ namespace VMBoxSnapshot
             }
             return _path;
         }
-        void ThreadDone(string output)
+        void FilterVMsName(string output)
         {
             var _t = output.Split('\"').ToList(); //separate line
             _t.RemoveAll(x => string.IsNullOrEmpty(x) || x.Contains("\r")); //remove empty and uid
@@ -263,7 +245,14 @@ namespace VMBoxSnapshot
         }
         public void ReadProcess(string path,string args,uint id = 0)
         {
-            string _list = null; 
+            string _list = null;
+
+            /*-------------------------------------*/
+            /*Create new thread for reading process*/
+            /*-------------------------------------*/
+
+            #region Another tread
+
             new Thread(() => {
                 using (Process pr = new Process())
                 {
@@ -278,28 +267,30 @@ namespace VMBoxSnapshot
                     _list = pr.StandardOutput.ReadToEnd();
                     pr.WaitForExit();
 
+                    /*        Create delegate for thread.                   */
+                    /*        For a component that runs in another thread.  */
+
                     if (id == 1)
                     {
-                        CommandVMs del = new CommandVMs(ThreadDone);
+                        CommandVMs del = new CommandVMs(FilterVMsName);
                         ListVM.BeginInvoke(del, _list);
                     }
-                    else
-                    {
-                        ShowMessage("SnapShoot was successfully created!", _list, ToolTipIcon.Info);
-                    }
+                    else notIco.ShowBalloonTip(100, "SnapShoot was successfully created!", _list, ToolTipIcon.Info);
                 }
             }).Start();
+
+            #endregion Another tread
         }
         #region Config file
 
         void SaveConfig(string path)
         {
-            if (Configurated)
+            if (File.Exists(confPath))
             {
                 if (ListVM.Items.Count > 0 && selectedVM != null)
                 {
                     File.WriteAllLines(path, new string[] { Path, DateTime.Now.ToString(), mode.ToString(), selectedVM,TimeInDay });
-                    ShowMessage("Saved", "Configuration file successfully saved!", ToolTipIcon.Info);
+                    notIco.ShowBalloonTip(100, "Saved", "Configuration file successfully saved!", ToolTipIcon.Info);
 
                     Refresh();
                 }
@@ -309,13 +300,13 @@ namespace VMBoxSnapshot
             {
                 /*Creating config file if is not existed*/
                 using (File.Create(path))
-                ShowMessage("Config file was created", "Configuration file does not exist, but now was created!", ToolTipIcon.Info);
+                notIco.ShowBalloonTip(100, "Config file was created", "Configuration file does not exist, but now was created!", ToolTipIcon.Info);
                 SaveConfig(path);
             }
         }
         void LoadConfig()
         {
-            if (Configurated)
+            if (File.Exists(confPath))
             {
                 var _data = File.ReadAllLines(confPath);
                 if (_data != null && _data.Length == 5)
@@ -332,28 +323,32 @@ namespace VMBoxSnapshot
                     }
                     catch(Exception ex)
                     {
+                        /*Delete wrong configuration file*/
                         if (MessageBox.Show($"The configuration file is corrupted. Do you wish to remove it? \n\n Exception :{ex.Message}",
                                             "Reading config file failed",MessageBoxButtons.YesNo,MessageBoxIcon.Error) == DialogResult.Yes)
-                            File.Delete(path);
+                                                 File.Delete(path);
                     }
                 }
                 /*Reading failed message*/
-                else ShowMessage("Reading config file failed", "The configuration file is corrupted or data has been deleted!", ToolTipIcon.Error);
+                else notIco.ShowBalloonTip(100, "Reading config file failed", "The configuration file is corrupted or data has been deleted!", ToolTipIcon.Error);
             }
-            else ShowMessage("Application don't was configured!", "For functionality, it is necessary to set everything and save the configuration.", ToolTipIcon.Info);
+            else notIco.ShowBalloonTip(100, "Application don't was configured!", "For functionality, it is necessary to set everything and save the configuration.", ToolTipIcon.Info);
         }
 
         #endregion Config file
+        /// <summary>
+        /// Function create snapshot
+        /// </summary>
         void CreateSnapShot()
         {
-            if (Configurated)
+            if (File.Exists(confPath))
             {
                 if(readyToAutoSnapShot)
                 {
                     ReadProcess(string.Format(@"{0}\VBoxManage.exe",Path), $"snapshot \"{selectedVM}\" take " +
                                               $"\"{DateTime.Now.Year}_{DateTime.Now.Month}_{DateTime.Now.Day} " +
-                                              $"{DateTime.Now.Hour}:{DateTime.Now.Minute}:{DateTime.Now.Second}\"",id:2);
-                    //SaveConfig(Path);
+                                              $"{DateTime.Now.Hour}:{DateTime.Now.Minute}:{DateTime.Now.Second}\"");
+                    SaveConfig(Path);
                 }
             }
         }
